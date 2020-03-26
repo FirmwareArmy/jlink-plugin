@@ -1,0 +1,13 @@
+#!/bin/bash
+
+xpl_path=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+
+cd ${xpl_path}/..
+
+set -e
+
+if [ ! -d jlink ]
+then
+	tar -xvzf JLink_Linux_V664b_x86_64.tgz
+	mv JLink_Linux_V664b_x86_64 jlink
+fi

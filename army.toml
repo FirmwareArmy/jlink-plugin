@@ -1,0 +1,16 @@
+[project]
+	type = "plugin"
+	name = "jlink-plugin"
+	description = "jlink flask plugin"
+	version = "6.6.4" 
+	
+	entrypoint = "jlink_plugin/build.py"
+
+[packaging]
+	include = [
+		"plugin",
+		"jlink_plugin"
+	]
+	exclude = [
+		"*.pyc"
+	]
