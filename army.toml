@@ -8,8 +8,8 @@
 
 [packaging]
 	include = [
-		"plugin",
-		"jlink_plugin"
+		"jlink_plugin",
+		"jlink"
 	]
 	exclude = [
 		"*.pyc"
