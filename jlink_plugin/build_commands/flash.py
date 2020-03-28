@@ -111,9 +111,12 @@ def project_flash(args, config, **kwargs):
         return
 
     # get target config
-    if config.command_target():    
+    target = None
+    if config.command_target():
+        # if target is specified in command line then it is taken by default
+        log.info(f"Search command target: {config.command_target()}")
+        
         # get target config
-        target = None
         for t in config.targets():
             if t==config.command_target():
                 target = config.targets()[t]
@@ -121,10 +124,19 @@ def project_flash(args, config, **kwargs):
         if target is None:
             log.error(f"Target not found '{config.command_target()}'")
             exit(1)
-        log.debug(f"target: {target}")
+    elif config.default_target():
+        log.info(f"Search default target: {config.default_target()}")
+        for t in config.targets():
+            if t==config.default_target():
+                target = config.targets()[t]
+                target['name'] = t
+        if target is None:
+            log.error(f"Target not found '{config.default_target()}'")
+            exit(1)
     else:
         log.error(f"No target specified")
         exit(1)
+    log.debug(f"target: {target}")
 
     build_path = os.path.join(config.output_path(), target["name"])
     log.debug(f"build path: {build_path}")
