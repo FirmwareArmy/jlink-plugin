@@ -10,6 +10,7 @@ from log import log
 import dependency
 import re
 from subprocess import Popen, PIPE, STDOUT
+from debugtools import print_stack
 
 def to_relative_path(path):
     home = os.path.expanduser("~")
@@ -90,6 +91,7 @@ def cmake_get_variable(path, name):
                 line = file.readline()
             
     except Exception as e:
+        print_stack()
         log.error(f"{e}")
         exit(1)
     
@@ -106,8 +108,8 @@ def project_flash(args, config, **kwargs):
             log.error("Current path is not a project")
             exit(1)
     except Exception as e:
-        log.error(f"{e}")
         print_stack()
+        log.error(f"{e}")
         return
 
     # get target config
@@ -146,8 +148,8 @@ def project_flash(args, config, **kwargs):
         build_config = Config(None, os.path.join(build_path, 'army.toml'))
         build_config.load()
     except Exception as e:
-        log.error(f"{e}")
         print_stack()
+        log.error(f"{e}")
         return
 
     # load dependencies
@@ -215,6 +217,7 @@ def project_flash(args, config, **kwargs):
         p.wait(timeout=0.2)
 
     except Exception as e:
+        print_stack()
         log.error(f"{e}")
         exit(1)
         
