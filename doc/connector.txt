@@ -1,0 +1,10 @@
+Small 10 points connector:
+
+ -----    -------
+|  9  7  5  3  1 |
+| 10  8  6  4  2 |
+ ----------------
+ 1:  VREF = 3.3V
+ 7:  TMS  = SWDIO
+ 9:  TCK  = SWCLK
+ 10: GND
