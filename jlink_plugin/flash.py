@@ -156,7 +156,8 @@ def project_flash(args, config, **kwargs):
     if build_config.config['build']['debug']:
         dependencies = dependency.load_dev_dependencies(config, target)
     else:
-        dependencies = dependency.load_dependencies(config, target)
+        # TODO dependencies = dependency.load_dependencies(config, target)
+        dependencies = dependency.load_dev_dependencies(config, target)
 
     # get device
     arch = get_arch(config, target, dependencies)

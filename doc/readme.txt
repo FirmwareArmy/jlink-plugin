@@ -8,3 +8,8 @@ Small 10 points connector:
  7:  TMS  = SWDIO
  9:  TCK  = SWCLK
  10: GND
+
+# update jlink clone firmware manually (V7/V8)
+$ JLinkExe -device STM32F205RE -if swd -speed 12000
+J-Link>connect
+J-Link>loadbin firmware.bin, 0x08000000

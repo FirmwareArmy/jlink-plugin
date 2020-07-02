@@ -1,0 +1,5 @@
+#!/bin/bash
+
+xpl_path=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+
+${xpl_path}/prebuild

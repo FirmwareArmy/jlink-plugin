@@ -1,10 +1,6 @@
-[project]
-	type = "plugin"
-	name = "jlink-plugin"
-	description = "jlink flask plugin"
-	version = "6.6.4" 
-	
-	entrypoint = "jlink_plugin/build.py"
+name = "jlink-plugin"
+description = "jlink flash plugin"
+version = "6.6.4" 
 
 [packaging]
 	include = [
