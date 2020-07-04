@@ -1,16 +1,13 @@
-import shutil
+from army.api.click import verbose_option 
+from army.api.project import load_project
+from army.api.debugtools import print_stack
+from army.api.log import log, get_log_level
+from army.api.package import load_project_packages
+from army.army import cli, build
 import os
-import extargparse
-import sys
-from config import Config
-from config import load_project
-from command import Command
-import jlink_plugin
-from log import log
-import dependency
+import click
 import re
 from subprocess import Popen, PIPE, STDOUT
-from debugtools import print_stack
 
 def to_relative_path(path):
     home = os.path.expanduser("~")
@@ -22,19 +19,7 @@ def to_relative_path(path):
         path = os.path.relpath(abspath, cwd)
     return path
 
-toolchain_path = to_relative_path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-def init_parser(parentparser, config):
-    parser = parentparser.add_parser('flash', help='Flash firmware')
-    parser.set_defaults(func=project_flash)
-
-    # add army default commands
-    subparser = parser.add_subparsers(metavar='COMMAND', title=None, description=None, help=None, parser_class=extargparse.ArgumentParser, required=False)
-    
-    flash_command = Command('flash', jlink_plugin.build_commands.flash, subparser, {})
-    flash_command.register()
-    flash_command.add_parent('compile', config)
-
+toolchain_path = to_relative_path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 def locate_jlink():
     global toolchain_path
@@ -48,30 +33,27 @@ def locate_jlink():
     return jlink_path
 
 def get_arch(config, target, dependencies):
-    if 'arch' not in target:
-        log.error(f"arch not defined for target '{target['name']}'")
-        exit(1)
-    target_arch = target['arch']
+#     if 'arch' not in target:
+#         log.error(f"arch not defined for target '{target['name']}'")
+#         exit(1)
+#     target_arch = target['arch']
     
     res = None
     found_dependency = None
     for dependency in dependencies:
-        dependency_arch = dependency['config'].arch()
-        for arch in dependency_arch:
-            if arch==target_arch:
+        for arch in dependency.arch:
+            if arch==target.arch:
                 if found_dependency is not None:
-                    log.error(f"arch from {dependency['module']} already defined in {found_dependency['module']}")
+                    log.error(f"arch from {dependency.name} already defined in {found_dependency.name}")
                     exit(1)
-                res = dependency_arch[arch]
-                res['path'] = dependency['path']
-                res['module'] = dependency['module']
+                res = (dependency, dependency.arch[arch])
                 found_dependency = dependency
-                if 'definition' not in res:
-                    log.error(f"missing arch definition from {dependency['module']}")
-                    exit(1)
+#                 if 'definition' not in res:
+#                     log.error(f"missing arch definition from {dependency['module']}")
+#                     exit(1)
 
     if res is None:
-        log.error(f"no configuration available for arch '{target_arch}'")
+        log.error(f"no configuration available for arch '{target.arch}'")
         exit(1)
     
     return res
@@ -97,72 +79,72 @@ def cmake_get_variable(path, name):
     
     return None
     
-def project_flash(args, config, **kwargs):
+@build.command(name='flash', help='Flash firmware')
+@verbose_option()
+@click.pass_context
+def flash(ctx, **kwargs):
     global toolchain_path
 
+    log.info(f"flash")
     
-    try:
-        # load project configuration
-        config = load_project(config)
-        if not config:
-            log.error("Current path is not a project")
+    # load configuration
+    config = ctx.parent.config
+
+    # load project
+    project = None
+    if os.path.exists('army.toml'):
+        try:
+            # load project configuration
+            project = load_project()
+        except Exception as e:
+            print_stack()
+            print(f"army.toml: {e}", sys.stderr)
             exit(1)
-    except Exception as e:
-        print_stack()
-        log.error(f"{e}")
-        return
+    if project is None:
+        print(f"no project found", sys.stderr)
+        exit(1)
 
     # get target config
     target = None
-    if config.command_target():
+    target_name = None
+    if config.target.value()!="":
         # if target is specified in command line then it is taken by default
-        log.info(f"Search command target: {config.command_target()}")
+        log.info(f"Search command target: {config.target}")
         
         # get target config
-        for t in config.targets():
-            if t==config.command_target():
-                target = config.targets()[t]
-                target['name'] = t
+        for t in project.target:
+            if t==config.target.value():
+                target = project.target[t]
+                target_name = t
         if target is None:
-            log.error(f"Target not found '{config.command_target()}'")
+            print(f"{config.target}: target not found", file=sys.stderr)
             exit(1)
-    elif config.default_target():
-        log.info(f"Search default target: {config.default_target()}")
-        for t in config.targets():
-            if t==config.default_target():
-                target = config.targets()[t]
-                target['name'] = t
+    elif project.default_target:
+        log.info(f"Search default target: {project.default_target}")
+        for t in project.target:
+            if t==project.default_target:
+                target = project.target[t]
+                target_name = t
         if target is None:
-            log.error(f"Target not found '{config.default_target()}'")
+            print(f"{project.default_target}: target not found", file=sys.stderr)
             exit(1)
     else:
-        log.error(f"No target specified")
+        print(f"no target specified", file=sys.stderr)
         exit(1)
     log.debug(f"target: {target}")
 
-    build_path = os.path.join(config.output_path(), target["name"])
-    log.debug(f"build path: {build_path}")
+    output_path = 'output'
+    build_path = os.path.join(output_path, target_name)
+    log.info(f"build_path: {build_path}")
     
-    try:
-        # load built firmware configuration
-        build_config = Config(None, os.path.join(build_path, 'army.toml'))
-        build_config.load()
-    except Exception as e:
-        print_stack()
-        log.error(f"{e}")
-        return
-
     # load dependencies
-    if build_config.config['build']['debug']:
-        dependencies = dependency.load_dev_dependencies(config, target)
-    else:
-        # TODO dependencies = dependency.load_dependencies(config, target)
-        dependencies = dependency.load_dev_dependencies(config, target)
+    dependencies = load_project_packages(project, target_name)
+    log.debug(f"dependencies: {dependencies}")
 
     # get device
-    arch = get_arch(config, target, dependencies)
+    dependency, arch = get_arch(config, target, dependencies)
     log.debug(f"arch: {arch}")
-    device = cmake_get_variable(os.path.join(arch['path'], arch['module'], arch['definition']), "DEVICE")
+    device = cmake_get_variable(os.path.join(dependency.path, arch.definition), "DEVICE")
     if device is None:
         log.error(f"No device found for target {target}")
         exit(1)

@@ -5,7 +5,8 @@ version = "6.6.4"
 [packaging]
 	include = [
 		"jlink_plugin",
-		"jlink"
+		"jlink",
+		"__init__.py"
 	]
 	exclude = [
 		"*.pyc"
