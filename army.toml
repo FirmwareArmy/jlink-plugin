@@ -1,6 +1,6 @@
 name = "jlink-plugin"
 description = "jlink flash plugin"
-version = "6.6.4" 
+version = "1.0.0" 
 
 [packaging]
 	include = [
