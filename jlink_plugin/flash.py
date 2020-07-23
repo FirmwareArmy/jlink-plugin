@@ -55,27 +55,6 @@ def get_arch(config, target, dependencies):
     
     return found_dependency
 
-def cmake_get_variable(path, name):
-    log.debug(f"open {path}")
-    try:
-        with open(path, "r") as file:
-            line = file.readline()
-            while(line):
-                name_search = re.search('set\((.*) (.*)\)', line, re.IGNORECASE)
-
-                if name_search:
-                    if name_search.group(1)==name:
-                        return name_search.group(2)
-    
-                line = file.readline()
-            
-    except Exception as e:
-        print_stack()
-        log.error(f"{e}")
-        exit(1)
-    
-    return None
-    
 @build.command(name='flash', help='Flash firmware')
 @verbose_option()
 @click.pass_context
@@ -104,23 +83,6 @@ def flash(ctx, **kwargs):
     build_path = os.path.join(output_path, target_name)
     log.info(f"build_path: {build_path}")
     
-#     # load dependencies
-#     try:
-#         dependencies = load_project_packages(project, target_name)
-#         log.debug(f"dependencies: {dependencies}")
-#     except Exception as e:
-#         print_stack()
-#         print(f"{e}", file=sys.stderr)
-#         clean_exit()
-#  
-#     # get device
-#     arch, arch_pkg = get_arch(config, target, dependencies)
-#     log.debug(f"arch: {arch}")
-#     device = cmake_get_variable(os.path.join(dependency.path, arch.definition), "DEVICE")
-#     if device is None:
-#         print(f"No device found for target {target}", file=sys.stderr)
-#         exit(1)
-
     device = target.arch
     if device.startswith("ATSAMD"):
         device = device.replace("ATSAMD", "SAMD")
