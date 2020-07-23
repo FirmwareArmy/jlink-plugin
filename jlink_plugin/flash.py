@@ -8,6 +8,7 @@ import os
 import click
 import re
 from subprocess import Popen, PIPE, STDOUT
+import sys
 
 def to_relative_path(path):
     home = os.path.expanduser("~")
@@ -33,10 +34,7 @@ def locate_jlink():
     return jlink_path
 
 def get_arch(config, target, dependencies):
-#     if 'arch' not in target:
-#         log.error(f"arch not defined for target '{target['name']}'")
-#         exit(1)
-#     target_arch = target['arch']
+    target_arch = target.arch
     
     res = None
     found_dependency = None
@@ -44,19 +42,18 @@ def get_arch(config, target, dependencies):
         for arch in dependency.arch:
             if arch==target.arch:
                 if found_dependency is not None:
-                    log.error(f"arch from {dependency.name} already defined in {found_dependency.name}")
+                    log.error(f"arch '{arch}' redefinition from'{found_dependency[1].name}' in {dependency.name}")
                     exit(1)
-                res = (dependency, dependency.arch[arch])
-                found_dependency = dependency
-#                 if 'definition' not in res:
-#                     log.error(f"missing arch definition from {dependency['module']}")
-#                     exit(1)
+                found_dependency = (dependency.arch[arch], dependency)
+                if dependency.arch[arch].definition=="":
+                    log.error(f"missing definition in arch '{arch}' from '{dependency.name}'")
+                    exit(1)
 
-    if res is None:
-        log.error(f"no configuration available for arch '{target.arch}'")
+    if found_dependency is None:
+        print(f"no configuration available for arch '{target.arch}'", file=sys.stderr)
         exit(1)
     
-    return res
+    return found_dependency
 
 def cmake_get_variable(path, name):
     log.debug(f"open {path}")
@@ -107,24 +104,28 @@ def flash(ctx, **kwargs):
     build_path = os.path.join(output_path, target_name)
     log.info(f"build_path: {build_path}")
     
-    # load dependencies
-    try:
-        dependencies = load_project_packages(project, target_name)
-        log.debug(f"dependencies: {dependencies}")
-    except Exception as e:
-        print_stack()
-        print(f"{e}", file=sys.stderr)
-        clean_exit()
+#     # load dependencies
+#     try:
+#         dependencies = load_project_packages(project, target_name)
+#         log.debug(f"dependencies: {dependencies}")
+#     except Exception as e:
+#         print_stack()
+#         print(f"{e}", file=sys.stderr)
+#         clean_exit()
+#  
+#     # get device
+#     arch, arch_pkg = get_arch(config, target, dependencies)
+#     log.debug(f"arch: {arch}")
+#     device = cmake_get_variable(os.path.join(dependency.path, arch.definition), "DEVICE")
+#     if device is None:
+#         print(f"No device found for target {target}", file=sys.stderr)
+#         exit(1)
 
-    # get device
-    dependency, arch = get_arch(config, target, dependencies)
-    log.debug(f"arch: {arch}")
-    device = cmake_get_variable(os.path.join(dependency.path, arch.definition), "DEVICE")
-    if device is None:
-        log.error(f"No device found for target {target}")
-        exit(1)
-
-    log.info("Flash $device with JLink")
+    device = target.arch
+    if device.startswith("ATSAMD"):
+        device = device.replace("ATSAMD", "SAMD")
+    
+    log.info(f"Flash {device} with JLink")
 # 
     hex_file = os.path.join(build_path, "bin/firmware.hex")
     binfile = os.path.join(build_path, "bin/firmware.bin")
