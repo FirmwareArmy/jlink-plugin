@@ -3,7 +3,7 @@ from army.api.project import load_project
 from army.api.debugtools import print_stack
 from army.api.log import log, get_log_level
 from army.api.package import load_project_packages
-from army.army import cli, build
+from army import cli, build
 import os
 import click
 import re

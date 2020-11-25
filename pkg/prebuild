@@ -8,6 +8,6 @@ set -e
 
 if [ ! -d jlink ]
 then
-	tar -xvzf JLink_Linux_V664b_x86_64.tgz
-	mv JLink_Linux_V664b_x86_64 jlink
+	tar -xvzf JLink_Linux_V688_x86_64.tgz
+	mv JLink_Linux_V688_x86_64 jlink
 fi
