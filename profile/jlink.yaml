@@ -1,0 +1,7 @@
+plugins:
+- name: jlink-plugin
+  version: 1.0.0
+
+tools:
+  jlink:
+    path: "{{package: jlink-plugin@1.0.0}}/jlink/JLinkExe"

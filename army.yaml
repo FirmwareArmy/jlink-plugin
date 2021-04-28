@@ -1,0 +1,16 @@
+name: jlink-plugin
+description: jlink flash plugin
+version: 1.0.0
+
+packaging:
+  include:
+  - plugin
+  - jlink
+  exclude:
+  - "*.pyc"
+
+profiles:
+- jlink
+
+plugins: 
+  - plugin
