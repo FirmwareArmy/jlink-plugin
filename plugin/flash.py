@@ -22,7 +22,7 @@ tools_path = os.path.expanduser(to_relative_path(os.path.abspath(os.path.join(os
 
 @parser
 @group(name="build")
-@command(name='flash', help='Flash firmware')
+@command(name='flash', help='Flash firmware with Jlink')
 def flash(ctx, **kwargs):
     log.info(f"flash")
     
@@ -71,7 +71,7 @@ def flash(ctx, **kwargs):
     hex_file = os.path.join(build_path, "bin/firmware.hex")
     binfile = os.path.join(build_path, "bin/firmware.bin")
 # 
-    jlinkexe = locate_jlink()
+    jlinkexe = locate_jlink(profile)
     log.debug(f"jlink path: {jlinkexe}")
     
     # TODO: en cas d'immpossibilité de programmation il y a probablement une mauvaise configuration du proc
@@ -167,13 +167,13 @@ def get_arch(profile, project, dependencies):
     
     return arch, res_package
 
-def locate_jlink():
+def locate_jlink(profile):
     global tools_path
 
     # search for jlink folder
-    jlink_path = os.path.join('jlink', 'JLinkExe')
-    if os.path.exists(os.path.join(tools_path, jlink_path))==False:
-        log.error(f"jlink was not found inside '{tools_path}', check plugin installation")
+    jlink_path = profile.data[f"/tools/jlink/path"] 
+    if os.path.exists(os.path.expanduser(jlink_path))==False:
+        print(f"{jlink_path}: path not found for Jlink", file=sys.stderr)
         exit(1)
 
     return jlink_path

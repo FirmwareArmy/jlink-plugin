@@ -13,4 +13,4 @@ profiles:
 - jlink
 
 plugins: 
-  - plugin
+- plugin
