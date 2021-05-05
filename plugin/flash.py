@@ -83,7 +83,7 @@ def flash(ctx, **kwargs):
 # [[ $opt_erase -ne 0 ]] || erase=r
 
     if os.path.exists('/etc/udev/rules.d/99-jlink.rules')==False:
-        log.error(f"Can not execute jlink with current user, add '{os.path.join(tools_path, 'jlink/99-jlink.rules')}' inside '/etc/udev/rules.d/'")
+        print(f"Can not execute jlink with current user, add '{os.path.join(tools_path, 'jlink/99-jlink.rules')}' inside '/etc/udev/rules.d/'", file=sys.stderr)
         exit(1)
 
     try:
@@ -118,7 +118,7 @@ def flash(ctx, **kwargs):
 
     except Exception as e:
         print_stack()
-        log.error(f"{e}")
+        print(f"{e}", file=sys.stderr)
         exit(1)
 
 def get_target(profile):
