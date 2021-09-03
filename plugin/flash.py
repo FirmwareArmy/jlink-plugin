@@ -171,9 +171,13 @@ def locate_jlink(profile):
     global tools_path
 
     # search for jlink folder
-    jlink_path = profile.data[f"/tools/jlink/path"] 
-    if os.path.exists(os.path.expanduser(jlink_path))==False:
-        print(f"{jlink_path}: path not found for Jlink", file=sys.stderr)
+    try:
+        jlink_path = profile.data[f"/tools/jlink/path"] 
+        if os.path.exists(os.path.expanduser(jlink_path))==False:
+            print(f"{jlink_path}: path not found for Jlink", file=sys.stderr)
+            exit(1)
+    except Exception as e:
+        print(f"Jlink not provided by profile", file=sys.stderr)
         exit(1)
 
     return jlink_path
