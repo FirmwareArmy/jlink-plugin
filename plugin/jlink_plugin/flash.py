@@ -3,6 +3,7 @@ from army.api.debugtools import print_stack
 from army.api.log import log, get_log_level
 from army.api.package import load_project_packages, load_installed_package
 from army.api.project import load_project
+from jlink import JLink
 import os
 import re
 from subprocess import Popen, PIPE, STDOUT
@@ -23,7 +24,8 @@ tools_path = os.path.expanduser(to_relative_path(os.path.abspath(os.path.join(os
 @parser
 @group(name="build")
 @command(name='flash', help='Flash firmware with Jlink')
-def flash(ctx, **kwargs):
+@option(name='timeout', value='SECONDS', help='Timeout before failing', default=10)
+def flash(ctx, timeout, **kwargs):
     log.info(f"flash")
     
     # load configuration
@@ -87,35 +89,41 @@ def flash(ctx, **kwargs):
         exit(1)
 
     try:
-        commandline = [
-            f"{os.path.join(tools_path, jlinkexe)}", 
-            "-device", f"at{device}", 
-            "-if", "swd", 
-            "-speed", "12000"
-        ]
-        log.info(" ".join(commandline))
-        p = Popen(commandline, stdout=PIPE, stdin=PIPE, stderr=PIPE)
-#         stdout_data = p.communicate(input=b'data_to_write')[0]
-#         print(stdout_data.decode('utf-8'))
-        commands = [
-            "connect",
-            "r",
-            # {erase}
-            f"loadfile {hex_file}",
-            "exit"
-        ]
-        for command in commands:
-            p.stdin.write(f"{command}\n".encode('utf-8'))
-            p.stdin.flush()
-        line = p.stdout.readline()
-        while line:
-            print(line.decode('utf-8'), end='')
-            line = p.stdout.readline()
-
-        p.stdin.close()
-        p.terminate()
-        p.wait(timeout=0.2)
-
+#         commandline = [
+#             f"{os.path.join(tools_path, jlinkexe)}", 
+#             "-device", f"at{device}", 
+#             "-if", "swd", 
+#             "-speed", "12000"
+#         ]
+#         log.info(" ".join(commandline))
+#         p = Popen(commandline, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+# #         stdout_data = p.communicate(input=b'data_to_write')[0]
+# #         print(stdout_data.decode('utf-8'))
+#         commands = [
+#             "connect",
+#             "r",
+#             # {erase}
+#             f"loadfile {hex_file}",
+#             "exit"
+#         ]
+#         for command in commands:
+#             p.stdin.write(f"{command}\n".encode('utf-8'))
+#             p.stdin.flush()
+#         line = p.stdout.readline()
+#         while line:
+#             print(line.decode('utf-8'), end='')
+#             line = p.stdout.readline()
+# 
+#         p.stdin.close()
+#         p.terminate()
+#         p.wait(timeout=0.2)
+        jlink = JLink(f"AT{device}")
+        jlink.open(timeout)
+        jlink.connect(timeout)
+        jlink.erase(timeout)
+        jlink.flash_file('/home/seb/git/bootloader/output/SAMD21G18A/bin/firmware.bin', power_on=True, timeout=timeout)
+        jlink.reset(timeout, halt=False)
+        
     except Exception as e:
         print_stack()
         print(f"{e}", file=sys.stderr)

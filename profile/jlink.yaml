@@ -5,3 +5,6 @@ plugins:
 tools:
   jlink:
     path: "{{package: jlink-plugin@1.0.0}}/jlink/JLinkExe"
+
+  jlinklib:
+    path: "{{package: jlink-plugin@1.0.0}}/plugin/jlink_plugin/jlink.py"
